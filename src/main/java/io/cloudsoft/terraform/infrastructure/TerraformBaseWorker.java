@@ -77,6 +77,7 @@ public abstract class TerraformBaseWorker<Steps extends Enum<Steps>> {
         this.model = request.getDesiredResourceState();
         this.callbackContext = callbackContext!=null ? callbackContext : new CallbackContext();
         this.logger = Preconditions.checkNotNull(logger, "logger");
+        logger.log("Init complete");
     }
 
     public synchronized TerraformParameters getParameters() {
@@ -189,7 +190,7 @@ public abstract class TerraformBaseWorker<Steps extends Enum<Steps>> {
             try {
                 md = RemoteTerraformProcess.of(this).loadMetadata();
             } catch (Exception e) {
-                throw ConnectorHandlerFailures.unhandled("Unable to save model metadata: "+e, e);
+                throw ConnectorHandlerFailures.unhandled("Unable to load model metadata: "+e, e);
             }
     
             if (md.get("LogBucketName")!=null) model.setLogBucketName((String)md.get("LogBucketName"));
@@ -295,24 +296,24 @@ public abstract class TerraformBaseWorker<Steps extends Enum<Steps>> {
     }
 
     protected String appendMessages(String message, Object ...appendices) {
-        String result = "";
+        StringBuilder result = new StringBuilder();
         for (Object app: appendices) {
             if (app!=null) {
-                result += app;
-                if (result.equals(result.trim())) {
-                    result += " ";
+                result.append(app);
+                if (result.toString().equals(result.toString().trim())) {
+                    result.append(" ");
                 }
             }
         }
-        if (result.isEmpty()) {
+        if (result.length() == 0) {
             return message;
         }
         
-        result = result.trim();
+        result = new StringBuilder(result.toString().trim());
         if (message==null || message.isEmpty()) {
-            return result;
+            return result.toString();
         } else {
-            return message += " ("+result+")";
+            return message + " ("+result+")";
         }
     }
 

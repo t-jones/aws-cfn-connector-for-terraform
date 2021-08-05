@@ -43,14 +43,14 @@ public class SshToolbox {
         // generates a lot of output, but can be useful
         // sysout makes it appear in SAM tests but not cloudwatch,
         // which is a good compromise in most cases
-        System.out.println(message);
-//        logger.log(message);
+        //System.out.println(message);
+        logger.log(message);
     }
 
     public enum PostRunBehaviour { IGNORE, WARN, FAIL }
     
     protected void runSSHCommand(String command, PostRunBehaviour onNonZeroExitCode, PostRunBehaviour onNonEmptyStdErr) throws IOException {
-        debug("DEBUG: @" + serverHostname + "> " + command);
+        debug("DEBUG runSSHCommand: @" + serverHostname + "> " + command);
 
         final SSHClient ssh = new SSHClient();
 
