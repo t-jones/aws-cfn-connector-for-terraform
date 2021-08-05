@@ -65,8 +65,9 @@ The JSON payload must contain the `Cloudsoft::Terraform::Infrastructure` propert
  in the [user guide](./user-guide.md#syntax).
  
  To run the tests:
- 1. In one terminal, start SAM local lambda: `sam local start-lambda`
- 2. In another terminal, run: `cfn invoke --max-reinvoke 10 {CREATE,READ,UPDATE,DELETE,LIST} path/to/event.json`
+ 1. In one terminal (we'll call this the _SAM_ terminal), start SAM local lambda: `sam local start-lambda`
+ 2. In another terminal (we'll call this the _cfn_ terminal), run: 
+    `cfn invoke --max-reinvoke 10 {CREATE,READ,UPDATE,DELETE,LIST} path/to/event.json`
     
     For instance to do a full cycle of the tests for this project, execute each of the following commands:
     ```sh
@@ -76,11 +77,42 @@ The JSON payload must contain the `Cloudsoft::Terraform::Infrastructure` propert
     cfn invoke --max-reinvoke 10 READ ./sam-tests/read.json
     cfn invoke --max-reinvoke 10 DELETE ./sam-tests/delete.json
     ```
-    Log output will be shown in the _first_ terminal, whereas the second will show the
+    Log output will be shown in the _SAM_ terminal, whereas the _cfn_ terminal will show the
     input and output to the connector lambdas. Each command should conclude with a `SUCCESS` status.
     
-    _Note that `cfn` doesn't support yet profiles so you will need to have the `default` profile setup for your `aws` CLI.
-    However, you can specify `--region` to run the test in a specific region._
+    To successfully execute the cycle locally, you'll have to grab the `resource identifier` from the initial `CREATE` test.
+    In each of the `read|update|delete.json` event files, replacing the `<resource_identifier>` placeholder.
+    This value can be found in the initial logging for the `CREATE` call in the _SAM_ terminal:
+    ```text
+    [CREATE] invoking handler...
+    Init complete
+    io.cloudsoft.terraform.infrastructure.CreateHandler$Worker <snip>
+    ---
+    io.cloudsoft.terraform.infrastructure.CreateHandler$Worker <snip>
+    Stack resource model identifier set as: 20210804-063602-CALkoVcr
+    ```
+    or in most handler responses in the _cfn_ terminal in the `resourceModel/Identifier` field:
+    ```text
+    === Handler response ===
+    {
+        "status": "IN_PROGRESS",
+        "message": "Step: CREATE_LOG_TARGET Logs are available at https://s3.console.aws.amazon.com/s3/buckets/<snip>/20210804-063602-CALkoVcr/.",
+        "callbackContext": {
+            "commandRequestId": "20210804-063622-UVjrEQ",
+            "stepId": "CREATE_RUN_TF_INIT",
+            "lastDelaySeconds": 0,
+            "logBucketName": "<snip>",
+            "createdModelIdentifier": "20210804-063602-CALkoVcr"
+        },
+        "callbackDelaySeconds": 0,
+        "resourceModel": {
+            "Identifier": "20210804-063602-CALkoVcr",
+            "LogBucketUrl": "https://s3.console.aws.amazon.com/s3/buckets/<snip>/20210804-063602-CALkoVcr/",
+            "ConfigurationUrl": "https://raw.githubusercontent.com/cloudsoft/aws-cfn-connector-for-terraform/master/sam-tests/s3-step1.tf"
+        }
+    }
+   ```
+    _You can specify `--region` to run the test in a specific region._
  
     _These tests require the Terraform server to be up and running, as well as the parameters set in parameter store.
     See [prerequisites](./installation-guide.md#prerequisites) and [step 3 of the installation guide](./installation-guide.md#installation)._

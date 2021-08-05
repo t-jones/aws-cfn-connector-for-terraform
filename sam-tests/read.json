@@ -1,6 +1,7 @@
 {
   "desiredResourceState": {
-    "Name": "example-s3"
+    "Identifier": "<resource_identifier>"
   },
-  "logicalResourceIdentifier": "MyResource"
+  "logicalResourceIdentifier": "MyResource",
+  "previousResourceState": {}
 }
