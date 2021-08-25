@@ -19,14 +19,27 @@ The connector requires a running Terraform (version 0.12 or later) server that:
   is ZIP, which requires `unzip`, which, for example, can be installed on Ubuntu Linux
   with `apt-get install unzip`)
 
+You can quickly provision a server instance for testing in AWS and install terraform :
+- Create a server instance in EC2 using the Amazon Linux 2 AMI.  If you use an existing ssh key, ensure the private 
+  key is passwordless.
+- Log into the server as `ec2-user` and run `sudo yum -y update && sudo yum -y upgrade`.
+- Install terraform (**the connector has been tested with the 0.14.1 version of terraform.  1.x versions are known to not work with the current version of the connector**)
+  - Run `sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo`
+  - Run `sudo yum -y install terraform-0.14.1` 
+- Assign an instance role to the server appropriate for the resources terraform will be provisioning.  To test using a 
+  script in this repo, create a role with `AmazonS3FullAccess`.
+
+_(Taken from https://learn.hashicorp.com/tutorials/terraform/install-cli?in=terraform/aws-get-started.  Select
+  tabs Linux then Amazon Linux for instructions.)_
+
 ### AWS CLI
 
 You will need to have the AWS CLI installed and configured on your local machine. Please [see the documentation](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html) how to achieve this.
 
 ## Installation
 
-1. Download the [`resource-role.yaml`](https://raw.githubusercontent.com/cloudsoft/aws-cfn-connector-for-terraform/master/resource-role.yaml) template and create a stack using the command below. 
-   Note the ARN of the created execution role for use later.
+1. Download the [`resource-role.yaml`](https://raw.githubusercontent.com/cloudsoft/aws-cfn-connector-for-terraform/master/resource-role.yaml) template 
+   and create a stack using the command below.  Note the ARN of the created execution role for use later.
    ```sh
    aws cloudformation create-stack \
      --template-body "file://resource-role.yaml" \
@@ -35,7 +48,7 @@ You will need to have the AWS CLI installed and configured on your local machine
    ```
 
 1. Download the [`setup.yaml`](https://raw.githubusercontent.com/cloudsoft/aws-cfn-connector-for-terraform/master/setup.yaml) template.
-   Edit the parameters as needed. More detail on parameters is below. Note that the following ones (marked `FIXME` in the file) are required.
+   Edit the parameters as needed. [More detail on parameters is below](#configuration-parameters). Note that the following ones (marked `FIXME` in the file) are required.
    
    - `/cfn/terraform/ssh-host`
    - `/cfn/terraform/ssh-username`
@@ -49,26 +62,57 @@ You will need to have the AWS CLI installed and configured on your local machine
      --capabilities CAPABILITY_IAM
    ```
 
-1. Register the `Cloudsoft::Terraform::Infrastructure` CloudFormation type, using the command below, with the values returned above.
-   ```sh
-    EXECUTION_ROLE_ARN=...
-    LOGGING_ROLE_ARN=...
-    LOG_GROUP_NAME=...
+1. Download the `Cloudsoft::Terraform::Infrastructure` package and upload it to an s3 bucket:
+   ```
+   $ wget https://github.com/t-jones/aws-cfn-connector-for-terraform/releases/download/v0.1/cloudsoft-terraform-infrastructure.zip
+   # Make an s3 bucket if needed then upload the package to it
+   $ aws s3 mb s3://<bucket_name>
+   $ aws s3 cp cloudsoft-terraform-infrastructure.zip s3://<bucket>
+   ```
 
+1. Register the `Cloudsoft::Terraform::Infrastructure` CloudFormation type, using the command below, with info from 
+   resources created above.  
+   
+   CloudFormation outputs can be retrieved from the console or with the following commands:
+    ```
+    $ export EXECUTION_ROLE_ARN=$(aws cloudformation describe-stacks --stack-name CloudsoftTerraformInfrastructureExecutionRole --query "Stacks[0].Outputs[?OutputKey=='ExecutionRoleArn'].OutputValue" --output text) && echo EXECUTION_ROLE_ARN=$EXECUTION_ROLE_ARN
+    $ export LOGGING_ROLE_ARN=$(aws cloudformation describe-stacks --stack-name CloudsoftTerraformInfrastructureSetup --query "Stacks[0].Outputs[?OutputKey=='LoggingRoleArn'].OutputValue" --output text) && echo LOGGING_ROLE_ARN=$LOGGING_ROLE_ARN
+    $ export LOG_GROUP_NAME=$(aws cloudformation describe-stacks --stack-name CloudsoftTerraformInfrastructureSetup --query "Stacks[0].Outputs[?OutputKey=='LogGroup'].OutputValue" --output text) && echo LOG_GROUP_NAME=$LOG_GROUP_NAME
+   ```   
+
+    Then deploy the CloudFormation extension (update <bucket_name> to the name of the bucket where you copied the extension):
+
+   ```sh
     aws cloudformation register-type \
       --type RESOURCE \
       --type-name Cloudsoft::Terraform::Infrastructure \
-      --schema-handler-package https://github.com/cloudsoft/aws-cfn-connector-for-terraform/releases/download/latest/cloudsoft-terraform-infrastructure.zip \
+      --schema-handler-package s3://<bucket_name>/cloudsoft-terraform-infrastructure.zip \
       --execution-role-arn $EXECUTION_ROLE_ARN \
       --logging-config "{\"LogRoleArn\":\"$LOGGING_ROLE_ARN\",\"LogGroupName\": \"$LOG_GROUP_NAME\"}"
    ```
    
-   If you are updating the connector, note the version number and use the following command to set the default version:
+    Status of the deployment can be checked with `aws cloudformation describe-type-registration --registration-token <RegistrationToken>`.
+    `RegistrationToken` is returned from the initial call. 
+   
+   If you are updating the extension, note the version number and use the following command to set the default version:
    ```sh
-   aws cloudformation set-type-default-version --type RESOURCE --type-name Cloudsoft::Terraform::Infrastructure --version-id 0000000N
+   aws cloudformation set-type-default-version --type RESOURCE --type-name Cloudsoft::Terraform::Infrastructure --version-id <version_number>
    ```
+   
+   Once deployment is complete, the extension can be viewed in the AWS CloudFormation console under _Registry->Activated Extensions_ and then 
+   filtering on "Privately registered".
 
-## Configuration Paramters
+### Testing the installation
+
+Installation can be tested with the `terraform-example.cfn.yaml`  CloudFormation script in the root of this repository.
+ - Download the file locally.
+ - Update the AWS region in the embedded terraform script if desired.  Also, remove or update the `LogBucketName` parameter
+   for the `TerraformExample` resource.  See the description for `/cfn/terraform/logs-s3-bucket-name` below or 
+   [`LogBucketName`](user-guide.md#properties) in the user doc.
+ - Create a CloudFormation stack in the console.  Upload the template when prompted.
+ - When prompted, randomize the bucket names being passed as parameters to the stack.
+
+## Configuration Parameters
 
 This resource provider (RP) uses the following parameters:
 
@@ -94,7 +138,7 @@ This resource provider (RP) uses the following parameters:
    - `/cfn/terraform/logs-s3-bucket-name` (optional): if set, all Terraform logs are shipped to an S3
      bucket and returned in output and in error messages.
      This value is as per the `LogBucketName` property on the resource;
-     see the documentation on that property in the [user-guide.md].
+     see the documentation on that property in the [user guide](user-guide.md#properties).
      If that property is set it will override any value set here.
 
 Where a parameter is optional, it can be omitted or the special value `default` can be set to tell the RP

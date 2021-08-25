@@ -2,11 +2,10 @@
 
 ## Prerequisites
 
-To build the project, you will need the:
-
-* [CFN CLI](https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/resource-type-setup.html)
-
-Note you will need these prerequisites as described on that page:
+The build environment is described in the 
+[CloudFormation CLI](https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/what-is-cloudformation-cli.html) docs.  The
+following [prerequisites](https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/what-is-cloudformation-cli.html#resource-type-setup-java)
+(as described) are needed:
 
 * Python 3.6 or later
 * Java and Maven
@@ -93,8 +92,6 @@ The JSON payload must contain the `Cloudsoft::Terraform::Infrastructure` propert
     ```
     or in most handler responses in the _cfn_ terminal in the `resourceModel/Identifier` field:
     ```text
-    === Handler response ===
-    {
         "status": "IN_PROGRESS",
         "message": "Step: CREATE_LOG_TARGET Logs are available at https://s3.console.aws.amazon.com/s3/buckets/<snip>/20210804-063602-CALkoVcr/.",
         "callbackContext": {
@@ -110,12 +107,13 @@ The JSON payload must contain the `Cloudsoft::Terraform::Infrastructure` propert
             "LogBucketUrl": "https://s3.console.aws.amazon.com/s3/buckets/<snip>/20210804-063602-CALkoVcr/",
             "ConfigurationUrl": "https://raw.githubusercontent.com/cloudsoft/aws-cfn-connector-for-terraform/master/sam-tests/s3-step1.tf"
         }
-    }
-   ```
-    _You can specify `--region` to run the test in a specific region._
+    ```
+   
+    You can specify `--region` to run the test in a specific region.
  
-    _These tests require the Terraform server to be up and running, as well as the parameters set in parameter store.
-    See [prerequisites](./installation-guide.md#prerequisites) and [step 3 of the installation guide](./installation-guide.md#installation)._
+    These tests require the Terraform server to be up and running, as well as the parameters set in parameter store.  See 
+    [prerequisites](./installation-guide.md#prerequisites) and [step 3 of the installation guide](./installation-guide.md#installation).
+
 
 ### End-to-end tests
 
