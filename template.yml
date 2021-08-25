@@ -12,6 +12,7 @@ Resources:
     Properties:
       Handler: io.cloudsoft.terraform.infrastructure.HandlerWrapper::handleRequest
       Runtime: java8
+      MemorySize: 384
       CodeUri: ./target/cloudsoft-terraform-infrastructure-handler-1.0-SNAPSHOT.jar
 
   TestEntrypoint:
@@ -19,4 +20,5 @@ Resources:
     Properties:
       Handler: io.cloudsoft.terraform.infrastructure.HandlerWrapper::testEntrypoint
       Runtime: java8
+      MemorySize: 384
       CodeUri: ./target/cloudsoft-terraform-infrastructure-handler-1.0-SNAPSHOT.jar

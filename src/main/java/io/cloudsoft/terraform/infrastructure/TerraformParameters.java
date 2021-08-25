@@ -25,8 +25,8 @@ public class TerraformParameters {
     private static final int DEFAULT_SSH_PORT = 22;
     private static final String DEFAULT_PROCESS_MANAGER = "nohup";
     // allow this so that parameters can be set, as they don't allow blanks or null
-    private static final Set<String> DEFAULT_KEYWORDS = new LinkedHashSet<String>(Arrays.asList("default", "disabled", "off"));
-    private Logger logger;
+    private static final Set<String> DEFAULT_KEYWORDS = new LinkedHashSet<>(Arrays.asList("default", "disabled", "off"));
+    private final Logger logger;
     private final AmazonWebServicesClientProxy proxy;
     private final SsmClient ssmClient;
     private final S3Client s3Client;

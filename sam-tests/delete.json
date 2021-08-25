@@ -1,4 +1,7 @@
 {
-  "desiredResourceState": {},
-  "logicalResourceIdentifier": "MyResource"
+  "desiredResourceState": {
+    "Identifier": "<resource_identifier>"
+  },
+  "logicalResourceIdentifier": "MyResource",
+  "previousResourceState": {}
 }

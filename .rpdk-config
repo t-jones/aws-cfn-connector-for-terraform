@@ -1,4 +1,5 @@
 {
+    "artifact_type": "RESOURCE",
     "typeName": "Cloudsoft::Terraform::Infrastructure",
     "language": "java",
     "runtime": "java8",
@@ -12,5 +13,6 @@
             "infrastructure"
         ],
         "protocolVersion": "2.0.0"
-    }
+    },
+    "executableEntrypoint": "io.cloudsoft.terraform.infrastructure.HandlerWrapperExecutable"
 }
