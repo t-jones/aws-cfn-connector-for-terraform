@@ -5,7 +5,7 @@
 # local changes will have no effect on tests!
 
 provider "aws" {
-  region = "eu-central-1"
+  region = "us-west-2"
 }
 
 resource "aws_s3_bucket" "bucket1" {
